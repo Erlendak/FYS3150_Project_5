@@ -12,7 +12,7 @@ using namespace std;
 int main(){
     double delta_x1 = 0.1;
     double delta_x2 = 0.01;
-    double delta_t = 0.0001;
+    double delta_t = 0.001;
     //forward_euler(delta_x1);
     //forward_euler(delta_x2);
 

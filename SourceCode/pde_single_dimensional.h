@@ -21,8 +21,8 @@ inline double b(double t){return (0);//(2*t/20);
 inline double f(double x){return 100.0*exp(-10.0*x);
 }
 
-void tridag(double a,double b,double c,vec y,vec u, int N){
-    int n = N-1;
+void tridag(double a,double d,double c,vec &y,vec &u, int N){
+    /*int n = N-1;
     vec tmp(N);
 
     u(0)= u(N-1) = 0.0;
@@ -41,6 +41,33 @@ void tridag(double a,double b,double c,vec y,vec u, int N){
         y(i) = (u(i)-c*y(i+1))/tmp(i);
     }
 
+*/
+
+  //_x0 = 0 # Initial condition
+  //_x1 = 1 # Initial condition
+  //h = (_x1 - _x0) / n # Step size
+  //linspace(_x0,_x1,n)
+
+  //d    = 2
+  //a
+  //c = -1
+  double ac0 = a;
+  vec b =  u;
+
+  vec tmp_c(N-2);
+
+   b(0) = 0;
+   tmp_c(0) = tmp_c(0)/d;
+   b(1) = b(1)/d;
+   for (int i =2; i<(N-1);i++ ){
+       tmp_c(i-1) = (     ac0  /  ( d - (ac0*tmp_c(i-2))  )     );
+       b(i) = ( (b(i) -(ac0*b(i-1) ) )   / (d- (ac0*tmp_c(i-2)))   );// #d[i] - (_b[i-1] * a[i-1] )  );
+    }
+
+   for (int i = 1; i<N-1;i++){
+       b((N-1)-i) = b((N-1)-i) - (tmp_c((N-2)-i)*b(N-i) );
+   }
+   y = b;
 
 }
 
@@ -229,17 +256,21 @@ void barbarian_forward_euler(double delta_x, double delta_t){
 //  parts of the function for backward Euler
 void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
 {
+
+   mat ans(tsteps+1,n+1);
+
    double a, b, c;
    vec u(n+1); // This is u  of Au = y
    vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
+
 
    // Initial conditions
    for (int i = 1; i < n; i++) {
       y(i) = u(i) = g(delta_x*i);
    }
    // Boundary conditions (zero here)
-   y(n) = u(n) = 1;
-   u(0) = y(0)= 0;
+   y(n) = u(n) = 0;
+   u(0) = y(0)= 1;
    // Matrix A, only constants
    a = c = - alpha;
    b = 1 + 2*alpha;
@@ -248,16 +279,21 @@ void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
       //  here we solve the tridiagonal linear set of equations,
       tridag(a, b, c, y, u, n+1);
       // boundary conditions
-      u(0) = 0;
-      u(n) = 0;
-      // replace previous time solution with new
+      y(0) = 0;
+      y(n) = 1;
+            // replace previous time solution with new
       for (int i = 0; i <= n; i++) {
-     y(i) = u(i);
+     u(i) = y(i);
+      }
+      for (int i = 0; i <= n; i++){
+        ans(t,i) = y(i);
       }
       //  You may consider printing the solution at regular time intervals
       //....   // print statements
    }  // end time iteration
    //...
+  cout<<ans<<endl;
+
 }
 
 #endif // PDE_SINGLE_DIMENSIONAL_H
