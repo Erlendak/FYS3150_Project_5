@@ -11,14 +11,37 @@
 using namespace std;
 using namespace arma;
 
-inline double func(double x){return 1;} //abs(0.01*(x-0.5));}
+inline double g(double x){return 0;} //abs(0.01*(x-0.5));}
 
-inline double a(double t){return (10+(t/10));
+inline double a(double t){return (1); //+(t/10));
 }
 inline double b(double t){return (0);//(2*t/20);
 }
 
 inline double f(double x){return 100.0*exp(-10.0*x);
+}
+
+void tridag(double a,double b,double c,vec y,vec u, int N){
+    int n = N-1;
+    vec tmp(N);
+
+    u(0)= u(N-1) = 0.0;
+    tmp(1) = tmp(N-1) = b;
+
+    //Forward sub
+    for(int i=2;i<=n;i++){
+      tmp(i) = b-(a*c)/tmp(i-1);
+      u(i) = u(i)-(a*u(i-1))/tmp(i-1);
+    }
+
+    //Backward sub
+    //u[n-1] = g[n-1]/d[n-1];
+    y(n-1) = u(n-1)/tmp(n-1);
+    for(int i=n-2; i>0; i--){
+        y(i) = (u(i)-c*y(i+1))/tmp(i);
+    }
+
+
 }
 
 void thomas_algorithm(int n, double delta_x, double upper_diag, double main_diag, double lower_diag, double *u){
@@ -171,11 +194,12 @@ void barbarian_forward_euler(double delta_x, double delta_t){
     //  Here we have chosen the boundary conditions to be zero.
     //  n+1 is the number of mesh points in x
     //  Armadillo notation for vectors
-    u(0) = unew(0) = u(n) = unew(n) = 0.0;
+    u(0) = unew(0) = a(0);
+    u(n) = unew(n) = b(tsteps);
     for (int i = 1; i < n; i++) {
         x =  i*delta_x;
         //  initial condition
-        u(i) =  func(x);
+        u(i) =  g(x);
         //  intitialise the new vector
         unew(i) = 0;
     }
@@ -184,6 +208,8 @@ void barbarian_forward_euler(double delta_x, double delta_t){
    }
    // Time integration
    for (int t = 1; t <= tsteps; t++) {
+     unew(0) = a(t*delta_t);
+     unew(n) = b(t*delta_t);
      for (int i = 1; i < n; i++) {
              // Discretized diff eq
              unew(i) = alpha * u(i-1) +( (1 - 2*alpha) * u(i) )+ (alpha * u(i+1));
@@ -192,8 +218,7 @@ void barbarian_forward_euler(double delta_x, double delta_t){
        ans(t,i) = unew(i);
      }
      u = unew;
-     unew(0) = a(t*delta_t);
-     unew(n) = b(t*delta_t);
+
       //cout<<unew <<endl;
        //  note that the boundaries are not changed.
      }
@@ -210,17 +235,18 @@ void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
 
    // Initial conditions
    for (int i = 1; i < n; i++) {
-      y(i) = u(i) = func(delta_x*i);
+      y(i) = u(i) = g(delta_x*i);
    }
    // Boundary conditions (zero here)
-   y(n) = u(n) = u(0) = y(0);
+   y(n) = u(n) = 1;
+   u(0) = y(0)= 0;
    // Matrix A, only constants
    a = c = - alpha;
    b = 1 + 2*alpha;
    // Time iteration
    for (int t = 1; t <= tsteps; t++) {
       //  here we solve the tridiagonal linear set of equations,
-      //tridag(a, b, c, y, u, n+1);
+      tridag(a, b, c, y, u, n+1);
       // boundary conditions
       u(0) = 0;
       u(n) = 0;
