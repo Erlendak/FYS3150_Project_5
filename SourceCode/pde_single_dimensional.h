@@ -295,5 +295,76 @@ void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
   cout<<ans<<endl;
 
 }
+/*
+
+void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
+{
+   double a, b, c;
+   vec u(n+1); // This is u in Au = r
+   vec r(n+1); // Right side of matrix equation Au=r
+   ....
+   // setting up the matrix
+   a = c = - alpha;
+   b = 2 + 2*alpha;
+
+   // Time iteration
+   for (int t = 1; t <= tsteps; t++) {
+      // Calculate r for use in tridag, right hand side of the Crank Nicolson method
+      for (int i = 1; i < n; i++) {
+     r(i) = alpha*u(i-1) + (2 - 2*alpha)*u(i) + alpha*u(i+1);
+      }
+      r(0) = 0;
+      r(n) = 0;
+      //  Then solve the tridiagonal matrix
+     // tridiag(a, b, c, u , r, xsteps+1);
+      u(0) = 0;
+      u(n) = 0;
+      //  Eventual print statements etc
+      ....
+}
+}
+
+void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
+{
+
+   mat ans(tsteps+1,n+1);
+
+   double a, b, c;
+   vec u(n+1); // This is u  of Au = y
+   vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
+
+
+   // Initial conditions
+   for (int i = 1; i < n; i++) {
+      y(i) = u(i) = g(delta_x*i);
+   }
+   // Boundary conditions (zero here)
+   y(n) = u(n) = 0;
+   u(0) = y(0)= 1;
+   // Matrix A, only constants
+   a = c = - alpha;
+   b = 2 + 2*alpha;
+   // Time iteration
+   for (int t = 1; t <= tsteps; t++) {
+      //  here we solve the tridiagonal linear set of equations,
+      tridag(a, b, c, y, u, n+1);
+      // boundary conditions
+      y(0) = 0;
+      y(n) = 1;
+            // replace previous time solution with new
+      for (int i = 0; i <= n; i++) {
+     u(i) = y(i);
+      }
+      for (int i = 0; i <= n; i++){
+        ans(t,i) = y(i);
+      }
+      //  You may consider printing the solution at regular time intervals
+      //....   // print statements
+   }  // end time iteration
+   //...
+  cout<<ans<<endl;
+
+}
+*/
 
 #endif // PDE_SINGLE_DIMENSIONAL_H

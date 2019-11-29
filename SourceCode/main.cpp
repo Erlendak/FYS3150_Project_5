@@ -20,6 +20,7 @@ int main(){
     int tsteps = (int)(1/delta_t)-1;
     double alpha =  delta_t/(delta_x1*delta_x1);
     clone_backward_euler(1/delta_x1, tsteps, delta_x1, alpha);
+    //crank_nicolson(1/delta_x1, tsteps, delta_x1, alpha);
 
     return 0;
 
