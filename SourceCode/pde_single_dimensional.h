@@ -22,41 +22,13 @@ inline double f(double x){return 100.0*exp(-10.0*x);
 }
 
 void tridag(double a,double d,double c,vec &y,vec &u, int N){
-    /*int n = N-1;
-    vec tmp(N);
-
-    u(0)= u(N-1) = 0.0;
-    tmp(1) = tmp(N-1) = b;
-
-    //Forward sub
-    for(int i=2;i<=n;i++){
-      tmp(i) = b-(a*c)/tmp(i-1);
-      u(i) = u(i)-(a*u(i-1))/tmp(i-1);
-    }
-
-    //Backward sub
-    //u[n-1] = g[n-1]/d[n-1];
-    y(n-1) = u(n-1)/tmp(n-1);
-    for(int i=n-2; i>0; i--){
-        y(i) = (u(i)-c*y(i+1))/tmp(i);
-    }
-
-*/
-
-  //_x0 = 0 # Initial condition
-  //_x1 = 1 # Initial condition
-  //h = (_x1 - _x0) / n # Step size
-  //linspace(_x0,_x1,n)
-
-  //d    = 2
-  //a
-  //c = -1
+/*
   double ac0 = a;
-  vec b =  u;
+  vec b = u;
 
-  vec tmp_c(N-2);
+  vec tmp_c(N-2);//(N-2)
 
-   b(0) = 0;
+   //b(0) = 0;
    tmp_c(0) = tmp_c(0)/d;
    b(1) = b(1)/d;
    for (int i =2; i<(N-1);i++ ){
@@ -67,9 +39,31 @@ void tridag(double a,double d,double c,vec &y,vec &u, int N){
    for (int i = 1; i<N-1;i++){
        b((N-1)-i) = b((N-1)-i) - (tmp_c((N-2)-i)*b(N-i) );
    }
-   y = b;
+   //for (int i =1; i<N;i++){
+    // b(i) =u(i-1);
+   //}
+   y=b;
+*/
+    double ac0 = a;
+    vec b =  u;
 
-}
+    vec tmp_c(N-2);
+
+     b(0) = 0;
+     tmp_c(0) = tmp_c(0)/d;
+     b(1) = b(1)/d;
+     for (int i =2; i<(N-1);i++ ){
+         tmp_c(i-1) = (     ac0  /  ( d - (ac0*tmp_c(i-2))  )     );
+         b(i) = ( (b(i) -(ac0*b(i-1) ) )   / (d- (ac0*tmp_c(i-2)))   );// #d[i] - (_b[i-1] * a[i-1] )  );
+      }
+
+     for (int i = 1; i<N-1;i++){
+         b((N-1)-i) = b((N-1)-i) - (tmp_c((N-2)-i)*b(N-i) );
+     }
+     y = b;
+
+  }
+
 
 void thomas_algorithm(int n, double delta_x, double upper_diag, double main_diag, double lower_diag, double *u){
 
@@ -118,94 +112,8 @@ void thomas_algorithm(int n, double delta_x, double upper_diag, double main_diag
     }
 
 
-void forward_euler(double delta_x){
 
-    int n = 1/delta_x;
-
-    double *u = new double[n+1]; // Final solution vector
-    double delta_t;
-
-
-    double upper_diag  = -1;
-    double main_diag   =  2;
-    double lower_diag  = -1;
-
-   thomas_algorithm(n, delta_x, upper_diag, main_diag, lower_diag, u);
-   // ofstream ofile;
-    //      ofile << "       x:             approx:          exact:       relative error" << endl;
-    for (int i = 1; i < n;i++) {
-        cout<<u[i] <<endl;
-    //    double epsilon = log10(abs((u_val(x[i])-u[i])/u_val(x[i])));
-     //   ofile << setw(15) << setprecision(8) << u_val(x[i]);
-      //  ofile << setw(15) << setprecision(8) << u[i];
-       // ofile << setw(15) << setprecision(8) << x[i];
-       // ofile << setw(15) << setprecision(8) << epsilon <<endl;
-    }
-
-   delete[] u;
-};
-
-
-
-void backward_euler(double delta_x, double delta_t){
-
-   int n = 1/delta_x;
-
-   double *u = new double[n+1]; // Final result vector
-
-   double alpha = delta_t/(delta_x*delta_x);
-
-
-   double upper_diag  = -alpha;
-   double main_diag   =  1+(2*alpha);
-   double lower_diag  = -alpha;
-
-   thomas_algorithm(n, delta_x, upper_diag, main_diag, lower_diag, u);
-   // ofstream ofile;
-    //      ofile << "       x:             approx:          exact:       relative error" << endl;
-    for (int i = 1; i < n;i++) {
-        cout<<u[i] <<endl;
-    //    double epsilon = log10(abs((u_val(x[i])-u[i])/u_val(x[i])));
-     //   ofile << setw(15) << setprecision(8) << u_val(x[i]);
-      //  ofile << setw(15) << setprecision(8) << u[i];
-       // ofile << setw(15) << setprecision(8) << x[i];
-       // ofile << setw(15) << setprecision(8) << epsilon <<endl;
-    }
-
-   delete[] u;
-
-};
-
-void crank_nicolson(double delta_x, double delta_t){
-
-
-    int n = 1/delta_x;
-
-    double *u = new double[n+1]; // Final solution vector
-
-    double alpha = delta_t/(delta_x*delta_x);
-
-
-    double upper_diag  = -alpha;
-    double main_diag   =  1+(2*alpha);
-    double lower_diag  = -alpha;
-
-    thomas_algorithm(n, delta_x, upper_diag, main_diag, lower_diag, u);
-    // ofstream ofile;
-     //      ofile << "       x:             approx:          exact:       relative error" << endl;
-     for (int i = 1; i < n;i++) {
-         cout<<u[i] <<endl;
-     //    double epsilon = log10(abs((u_val(x[i])-u[i])/u_val(x[i])));
-      //   ofile << setw(15) << setprecision(8) << u_val(x[i]);
-       //  ofile << setw(15) << setprecision(8) << u[i];
-        // ofile << setw(15) << setprecision(8) << x[i];
-        // ofile << setw(15) << setprecision(8) << epsilon <<endl;
-     }
-
-    delete[] u;
-};
-
-void barbarian_forward_euler(double delta_x, double delta_t){
+void forward_euler(double delta_x, double delta_t){
 
 
     int n = (int)(1/delta_x)-1;
@@ -254,10 +162,38 @@ void barbarian_forward_euler(double delta_x, double delta_t){
 };
 
 //  parts of the function for backward Euler
-void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
+/*
+
+void backward_euler(int n, int tsteps, double delta_x, double alpha){
+    double a,b,c;
+    vec u(n+1);
+    vec r(n+1);
+
+    for (int i = 1; i<n; i++){
+        r(i) = u(i) = 0;
+
+    r(0) = u(0) = 0.0;
+    r(n) = u(n) = 1;
+
+    a = c = -alpha;
+    b = 1+2*alpha;
+
+    for(int t = 1; t <= tsteps; t++){
+        tridiag(a,b,c,r,u,n);
+
+        for(int i =0; i<=n; i++){
+            r(i) = u(i);
+            }
+         }
+    }
+     u.print();
+
+}
+*/
+void backward_euler(int n, int tsteps, double delta_x, double alpha)
 {
 
-   mat ans(tsteps+1,n+1);
+   mat ans(tsteps+1,n);
 
    double a, b, c;
    vec u(n+1); // This is u  of Au = y
@@ -269,11 +205,15 @@ void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
       y(i) = u(i) = g(delta_x*i);
    }
    // Boundary conditions (zero here)
-   y(n) = u(n) = 0;
-   u(0) = y(0)= 1;
+   y(n) = u(n) = 1;
+   u(0) = y(0)= 0;
    // Matrix A, only constants
    a = c = - alpha;
-   b = 1 + 2*alpha;
+   b = 1 + (2*alpha);
+   for (int i = 1; i <= n; i++){
+    ans(0,(i-1)) = u(i);
+   }
+
    // Time iteration
    for (int t = 1; t <= tsteps; t++) {
       //  here we solve the tridiagonal linear set of equations,
@@ -281,48 +221,77 @@ void clone_backward_euler(int n, int tsteps, double delta_x, double alpha)
       // boundary conditions
       y(0) = 0;
       y(n) = 1;
-            // replace previous time solution with new
-      for (int i = 0; i <= n; i++) {
-     u(i) = y(i);
+
+      for (int i = 1; i <= n; i++){
+        ans(t,(i-1)) = y(i);
       }
-      for (int i = 0; i <= n; i++){
-        ans(t,i) = y(i);
+
+      // replace previous time solution with new
+      for (int i = 0; i <= n; i++) {
+      u(i) = y(i);
       }
       //  You may consider printing the solution at regular time intervals
       //....   // print statements
    }  // end time iteration
    //...
   cout<<ans<<endl;
+  ofstream afile;
+      string afilename = "backwards_euler.dat";
+      afile.open(afilename);
+      afile << setiosflags(ios::showpoint | ios::uppercase);
+      afile << setw(20) << setprecision(8) << ans <<endl;
+      afile.close();
 
 }
 /*
+void tridiag(double a, double b, double c,vec r, vec &u, int n){
 
-void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
-{
-   double a, b, c;
-   vec u(n+1); // This is u in Au = r
-   vec r(n+1); // Right side of matrix equation Au=r
-   ....
-   // setting up the matrix
-   a = c = - alpha;
-   b = 2 + 2*alpha;
+    vec g(n+1);
+    vec d(n+1);
 
-   // Time iteration
-   for (int t = 1; t <= tsteps; t++) {
-      // Calculate r for use in tridag, right hand side of the Crank Nicolson method
-      for (int i = 1; i < n; i++) {
-     r(i) = alpha*u(i-1) + (2 - 2*alpha)*u(i) + alpha*u(i+1);
-      }
-      r(0) = 0;
-      r(n) = 0;
-      //  Then solve the tridiagonal matrix
-     // tridiag(a, b, c, u , r, xsteps+1);
-      u(0) = 0;
-      u(n) = 0;
-      //  Eventual print statements etc
-      ....
+    for(int i = 1; i<=n; i++){
+        g(i) = r(i);
+    }
+
+     d(0) = d(n) = 1;
+
+    //Forward sub
+    for(int i=1;i<=n-1;i++){
+      d(i) = b-(a*c)/d(i-1);
+      g(i) = g(i)-(a*g(i-1))/d(i-1);
+    }
+
+    //Backward sub
+    for(int i=n-1; i>0; i--){
+        /*if(i==1){
+        cout << g(i) << " " << c << " " << u(i+1) << " " << d(i) << " " << u(i) << endl;
+        }
+        u(i) = (g(i)-c*u(i+1))/d(i);
+    }
+
 }
+void crank_nicolson(int n, int tsteps, double delta_x,double alpha){
+    double a,b,c;
+    vec u(n+1);
+    vec r(n+1);
+
+    a = c = -alpha;
+    b = 2 + 2*alpha;
+
+    for( int t = 1; t< tsteps; t++){
+        for(int i=1; i<n; i++){
+            r(i) = alpha*u(i-1) + (2-2*alpha)*u(i) + alpha*u(i+1);
+        }
+    r(0) = 0;
+    r(n) = 1;
+
+    tridiag(a,b,c,r,u,n);
+    u(0) = 0;
+    u(n) = 1;
+    }
+    u.print();
 }
+
 
 void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
 {
