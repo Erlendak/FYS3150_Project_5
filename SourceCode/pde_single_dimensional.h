@@ -113,7 +113,7 @@ void thomas_algorithm(int n, double delta_x, double upper_diag, double main_diag
 
 
 
-void forward_euler(double delta_x, double delta_t){
+mat forward_euler(double delta_x, double delta_t){
 
 
     int n = (int)(1/delta_x)-1;
@@ -157,40 +157,14 @@ void forward_euler(double delta_x, double delta_t){
       //cout<<unew <<endl;
        //  note that the boundaries are not changed.
      }
-   cout<< ans <<endl;
+   //cout<< ans <<endl;
+   return ans;
    //cout<< ans <<endl;
 };
 
 //  parts of the function for backward Euler
-/*
 
-void backward_euler(int n, int tsteps, double delta_x, double alpha){
-    double a,b,c;
-    vec u(n+1);
-    vec r(n+1);
-
-    for (int i = 1; i<n; i++){
-        r(i) = u(i) = 0;
-
-    r(0) = u(0) = 0.0;
-    r(n) = u(n) = 1;
-
-    a = c = -alpha;
-    b = 1+2*alpha;
-
-    for(int t = 1; t <= tsteps; t++){
-        tridiag(a,b,c,r,u,n);
-
-        for(int i =0; i<=n; i++){
-            r(i) = u(i);
-            }
-         }
-    }
-     u.print();
-
-}
-*/
-void backward_euler(int n, int tsteps, double delta_x, double alpha)
+mat backward_euler(int n, int tsteps, double delta_x, double alpha)
 {
 
    mat ans(tsteps+1,n);
@@ -234,17 +208,13 @@ void backward_euler(int n, int tsteps, double delta_x, double alpha)
       //....   // print statements
    }  // end time iteration
    //...
-  cout<<ans<<endl;
-  ofstream afile;
-      string afilename = "backwards_euler.dat";
-      afile.open(afilename);
-      afile << setiosflags(ios::showpoint | ios::uppercase);
-      afile << setw(20) << setprecision(8) << ans <<endl;
-      afile.close();
+  //cout<<ans<<endl;
+  return(ans);
+
 
 }
-/*
-void tridiag(double a, double b, double c,vec r, vec &u, int n){
+
+void tridiag2(double a, double b, double c,vec r, vec &u, int n){
 
     vec g(n+1);
     vec d(n+1);
@@ -263,36 +233,43 @@ void tridiag(double a, double b, double c,vec r, vec &u, int n){
 
     //Backward sub
     for(int i=n-1; i>0; i--){
-        /*if(i==1){
-        cout << g(i) << " " << c << " " << u(i+1) << " " << d(i) << " " << u(i) << endl;
-        }
         u(i) = (g(i)-c*u(i+1))/d(i);
     }
 
 }
-void crank_nicolson(int n, int tsteps, double delta_x,double alpha){
+mat crank_nicolson(int n, int tsteps, double delta_x,double alpha){
+    mat ans(tsteps,n+1);
     double a,b,c;
     vec u(n+1);
     vec r(n+1);
 
     a = c = -alpha;
     b = 2 + 2*alpha;
-
+    u(0)=1;
+    for(int i=0; i<n; i++){u(i)=0; }
+    for(int i=1; i<n; i++){
+        ans(0,i)= alpha*u(i-1) + (2-2*alpha)*u(i) + alpha*u(i+1);
+    }
     for( int t = 1; t< tsteps; t++){
         for(int i=1; i<n; i++){
             r(i) = alpha*u(i-1) + (2-2*alpha)*u(i) + alpha*u(i+1);
         }
-    r(0) = 0;
-    r(n) = 1;
+        r(0) = 0;
+        r(n) = 1;
 
-    tridiag(a,b,c,r,u,n);
-    u(0) = 0;
-    u(n) = 1;
-    }
-    u.print();
+        tridiag2(a,b,c,r,u,n);
+        u(0) = 0;
+        u(n) = 1;
+        for(int i=0; i<=n; i++){
+            ans(t,i)= u(i);
+        }
+        }
+    return(ans);
+    //u.print();
 }
 
 
+/*
 void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
 {
 
@@ -336,4 +313,9 @@ void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
 }
 */
 
+
+
+/*
+
+  */
 #endif // PDE_SINGLE_DIMENSIONAL_H
