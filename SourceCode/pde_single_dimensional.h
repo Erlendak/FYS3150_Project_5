@@ -21,6 +21,8 @@ inline double b(double t){return (0);//(2*t/20);
 inline double f(double x){return 100.0*exp(-10.0*x);
 }
 
+
+
 void tridag(double a,double d,double c,vec &y,vec &u, int N){
 /*
   double ac0 = a;
@@ -65,57 +67,10 @@ void tridag(double a,double d,double c,vec &y,vec &u, int N){
   }
 
 
-void thomas_algorithm(int n, double delta_x, double upper_diag, double main_diag, double lower_diag, double *u){
-
-
-    double h = delta_x;
-
-    double *x = new double[n+1]; // Position vector removebal?
-
-
-
-    double *g = new double[n+1]; // Temperarly solution vector
-
-    double *d = new double[n+1]; // New temporary upperdiagonal
-
-
-    double *a = new double[n+1]; // Upper diagonal
-    double *b = new double[n+1]; // Main diagonal
-    double *c = new double[n+1]; // Lower diagonal
-
-    for(int i = 1; i<=n; i++){
-        x[i] = i*h;
-        g[i] = (h*h)*f(i*h);// Need to update this one
-
-        a[i] = upper_diag;
-        b[i] = main_diag;
-        c[i] = lower_diag;
-    }
-
-    u[0]= u[n] = 0.0; d[1] = d[n] = b[1];
-
-    //Forward sub
-    for(int i=2;i<=n;i++){
-        d[i] = b[i]-(a[i]*c[i-1])/d[i-1];
-      g[i] = g[i]-(a[i]*g[i-1])/d[i-1];
-    }
-
-    //Backward sub
-    //u[n-1] = g[n-1]/d[n-1];
-    u[n-1] = g[n-1]/d[n-1];
-    for(int i=n-2; i>0; i--){
-        u[i] = (g[i]-c[i+1]*u[i+1])/d[i];
-    }
-
-    delete[] x; delete[] g; delete[]  d; delete[] a; delete[] b; delete[] c;
-  //return (u);
-    }
 
 
 
 mat forward_euler(double delta_x, double delta_t){
-
-
     int n = (int)(1/delta_x)-1;
     int tsteps = (int)(1/delta_t)-1; // delta_t/delta_x^2  =<  1/2
     mat ans(tsteps+1,n+1);
@@ -269,53 +224,109 @@ mat crank_nicolson(int n, int tsteps, double delta_x,double alpha){
 }
 
 
-/*
-void crank_nicolson(int n, int tsteps, double delta_x, double alpha)
-{
-
-   mat ans(tsteps+1,n+1);
-
-   double a, b, c;
-   vec u(n+1); // This is u  of Au = y
-   vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
+double Q_sim1(double x,double rho, double cp, double delta_t){
+  //return 0;
+  double L = 120;
+  //Upper crust
+  if (x <= ( (1/L) *20 ) ){ // Scaled to L
+    return (1.44*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
 
 
-   // Initial conditions
-   for (int i = 1; i < n; i++) {
-      y(i) = u(i) = g(delta_x*i);
-   }
-   // Boundary conditions (zero here)
-   y(n) = u(n) = 0;
-   u(0) = y(0)= 1;
-   // Matrix A, only constants
-   a = c = - alpha;
-   b = 2 + 2*alpha;
-   // Time iteration
-   for (int t = 1; t <= tsteps; t++) {
-      //  here we solve the tridiagonal linear set of equations,
-      tridag(a, b, c, y, u, n+1);
-      // boundary conditions
-      y(0) = 0;
-      y(n) = 1;
-            // replace previous time solution with new
-      for (int i = 0; i <= n; i++) {
-     u(i) = y(i);
-      }
-      for (int i = 0; i <= n; i++){
-        ans(t,i) = y(i);
-      }
-      //  You may consider printing the solution at regular time intervals
-      //....   // print statements
-   }  // end time iteration
-   //...
-  cout<<ans<<endl;
+  //Lower crust
+  if (x <= ( (1/L) *40 ) ){ // Scaled to L
+      return (0.35*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+
+
+  //The mantle
+  if (x <= ( (1/L) *120 ) ){ // Scaled to L
+    return (0.05*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+  cout<<"Check"<<endl;
+ return 0;
+}
+
+vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, double delta_t){
+
+    //Simulation spesific constants ;
+
+    double temp_mantle = 1300;      // Mantle temperature   ;  1300 degree Celsius.
+    double temp_crust  = 8;         // Surface temperature  ;     8 degree celsius.
+    double rho = pow(3.510,3);      // Densety              ;       Kg/m^3
+    double cp = 1000;               // Heat capasity        ;       J/Kg/ degree Celcius
+    double k = 2.5;                 // Thermal conductivity ;       W/m/ degree Celcius
+    //Backward Euler ;
+
+       //mat ans(tsteps+1,n);
+       double scale_op, sum;
+       double tol = 0.1;
+       double a, b, c;
+       vec u(n+1); // This is u  of Au = y
+       vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
+
+       // Initial conditions
+       for (int i = 1; i < n; i++) {
+          y(i) = u(i) = i*temp_mantle/n; // Initial condtions, set for fastest equalibrium state
+       }
+
+       double alpha = delta_t/(delta_x*delta_x);
+       // Boundary conditions
+       y(n) = u(n) = temp_mantle;
+       u(0) = y(0)= temp_crust;
+       // Matrix A, only constants
+       a = c = - alpha*k/(rho*cp);
+       b = 1 + (2*alpha)*k/(rho*cp);
+
+       // Save our results for time the first time step.
+      // for (int i = 1; i <= n; i++){
+        //ans(0,(i-1)) = u(i);
+       //}
+
+       // Time iteration
+       for (int t = 1; t <= tsteps; t++) {
+          //  here we solve the tridiagonal linear set of equations,
+          tridag(a, b, c, y, u, n+1);
+
+
+
+          // replace previous time solution with new
+          for (int i = 1; i < n; i++) {
+            scale_op = (double)i/ (double)n;
+            y(i) = y(i)+(Q_sim1(scale_op,rho,cp, delta_t));
+           // cout<<scale_op<<endl;
+
+          }
+          u(0)=y(0) = temp_crust;
+          u(n)=y(n) = temp_mantle;
+
+          //for (int i = 1; i <= n; i++){
+            //ans(t,(i-1)) = u(i);
+          //}
+
+
+          sum = 0.0;
+
+          // replace previous time solution with new
+          for (int i = 0; i <= n; i++) {
+            sum += (u(i)-y(i)) * ( y(i)- u(i) );
+            u(i) = y(i);
+          }
+
+          if(sqrt(sum)<tol){
+              cout<<"equalibrium reached" <<endl;
+              return y;
+          }
+
+          //  You may consider printing the solution at regular time intervals
+          //....   // print statements
+       }  // end time iteration
+       //...
+      //cout<<ans<<endl;
+      return(y);
+
+
 
 }
-*/
 
-
-
-/*
-
-  */
 #endif // PDE_SINGLE_DIMENSIONAL_H
