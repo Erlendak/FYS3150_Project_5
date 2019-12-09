@@ -15,7 +15,7 @@ int main(){
 
     //test_jacobi_solver();
     //test_forward_euler();
-
+/*
     double delta_x1 = 0.1;
     double delta_x2 = 0.01;
     double delta_t = 0.000005;
@@ -91,6 +91,7 @@ int main(){
 
     diffusjon2dim(10);
 
+*/
     int n= 120;
     int tsteps = 100000000;
     double delta_x = 1000;
@@ -100,12 +101,63 @@ int main(){
     string hfilename = "RESULTS/simulation_no_enrichment.dat";
     hfile.open(hfilename);
     hfile << setiosflags(ios::showpoint | ios::uppercase);
-    hfile << setw(20) << setprecision(8) << simulation_before_radioactive_enrichment(n, tsteps, delta_x,delta_t) <<endl;
+    vec no_enrichment = simulation_before_radioactive_enrichment(n, tsteps, delta_x,delta_t);
+    hfile << setw(20) << setprecision(8) << no_enrichment <<endl;
     hfile.close();
 
     double time = tsteps * delta_t/60/60/24/365;
-    cout<< time <<endl;//in Giga years
+    cout<< time/pow(10,9) <<endl;//in Giga years
 
+    //Grensebetingelser
+   int nx = 120;
+   int ny = 150;
+   double dxy=1000;
+   double dt = delta_t;
+   mat A = zeros<mat>(nx,ny);
+
+   // Inital condtions
+   for(int j =0; j<ny; j++){
+       for(int i =0; i<nx; i++){
+           A(i,j)    = no_enrichment(i); //Depth condtions use vector from task above
+           //A(i,ny-1) = 1; //Depth condtions use vector from task above
+        }
+    }
+   for(int j =0; j<ny; j++){
+       A(0,j)    = 8; //Depth condtions use vector from task above
+       A(nx-1,j) = 1300; //Depth condtions use vector from task above
+    }
+   tsteps = 1000000;
+
+
+    simulation_with_enrichment(nx, ny, dt, dxy,A, tsteps);
+   time = tsteps*dt;
+    cout<< time/60/60/24/365/pow(10,9) <<endl;
+    cout<<"success" <<endl;
+
+    // Main simulation
+
+
+    ofstream ifile;
+    string ifilename = "RESULTS/simulation_implemented_enrichment_decay.dat";
+    ifile.open(ifilename);
+    ifile << setiosflags(ios::showpoint | ios::uppercase);
+
+    int n_results = 10;
+    tsteps = pow(10,9)*365*24*60*60/dt/n_results; // Gives us amount of time steps we need to use per result we want to note of a total of a Giga year.
+    int start_step;
+    for (int t = 0; t <n_results; t++){
+        start_step = t*tsteps;
+        simulation_implemented_enrichment_decay(nx, ny, dt, dxy,A, (t+1)*tsteps,start_step);
+        for( int i = 0; i<nx; i++){
+            for(int j=0; j<ny; j++){
+                ifile << setw(20) << setprecision(8) << A(i,j);
+            }
+        }
+        ifile<<endl;
+        cout<<"Simulated for ; "<<(t+1)*tsteps*dt/60/60/24/365/pow(10,9)<<"Giga years" <<endl;
+    }
+
+    ifile.close();
     return 0;
 
 };

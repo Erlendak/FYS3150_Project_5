@@ -25,15 +25,11 @@ void test_forward_euler(){
     //Analytical solution
     mat expected(tsteps,n+1);
     double x;
-    double t;
-    for(int j = 0; j<tsteps;j++){
-        for(int i = 0; i<n;i++){
-          t = delta_t*j;
-          x = delta_x *i;
-          expected(j,i) = x/L + (pow(-1,n) *  2/(n*M_PI)*sin((n*M_PI*x)/L)*exp(( (-n)*(-n)*M_PI*M_PI*t )/(L*L) ));
-        }
-     }
-
+    double t = 1;
+    for(int i = 0; i<n;i++){
+     x = delta_x *i;
+   //  expected(j,i) = x/L + (pow(-1,n) *  2/(n*M_PI)*sin((n*M_PI*x)/L)*exp(( (-n)*(-n)*M_PI*M_PI*t )/(L*L) ));
+    }
     mat approximation= forward_euler(delta_x,delta_t);
     //cout<<approximation<<endl;
     for(int i = 0; i<n;i++){

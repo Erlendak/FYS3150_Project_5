@@ -107,4 +107,158 @@ void diffusjon2dim(int n){
 }
 
 
+double Q_sim2(double x,double rho, double cp, double delta_t){
+  //return 0;
+  double L = 120;
+  //Upper crust
+  if (x <= ( (1/L) *20 ) ){ // Scaled to L
+    return (1.44*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+
+
+  //Lower crust
+  if (x <= ( (1/L) *40 ) ){ // Scaled to L
+      return (0.35*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+
+
+  //The mantle
+  if (x <= ( (1/L) *120 ) ){ // Scaled to L
+    return ((0.05+0.5)*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+  cout<<"Check"<<endl;
+ return 0;
+}
+void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, int tsteps){
+    //Simulation spesific constants ;
+
+    double rho = pow(3.510,3);      // Densety              ;       Kg/m^3
+    double cp = 1000;               // Heat capasity        ;       J/Kg/ degree Celcius
+    double k = 2.5;                 // Thermal conductivity ;       W/m/ degree Celcius
+
+
+    //Backward Euler ;
+
+    mat B = A; //Gammel A
+    double abstol = 10e-4;
+    double D = dt/(dxy*dxy)*k/(rho*cp);
+    double scaled_x;
+    ofstream gfile;
+    string gfilename = "RESULTS/simulation_with_enrichment.dat";
+    gfile.open(gfilename);
+    gfile << setiosflags(ios::showpoint | ios::uppercase);
+
+    for( int i = 0; i<nx; i++){
+        for(int j=0; j<ny; j++){
+         gfile << setw(20) << setprecision(8) << A(i,j);
+         }
+    }
+    gfile<<endl;
+
+    //Starter iterative løser
+    for(int k=0; k<tsteps; k++){
+
+        for(int i = 1; i<nx-1; i++){
+            scaled_x =(double)i/ (double)nx;
+            for(int j=1; j<ny-1; j++){
+
+                A(i,j) = ( (B(i,j) + D*(B(i+1,j) + B(i,j+1) -4*B(i,j) + B(i-1,j) + B(i,j-1))))+Q_sim2(scaled_x,rho,cp,dt);
+            }
+        }
+
+
+        //cout << A << endl;
+
+        double sum = 0.0;
+
+        for(int i=0; i<nx; i++){
+            for(int j=0; j<ny; j++){
+                sum += (B(i,j)-A(i,j))*(B(i,j)-A(i,j));
+                //B(i,j) = A(i,j);
+            }
+        }
+        if(sqrt(sum)<abstol){
+            //gfile.close();
+            //return k;
+            cout<<"Ekvilibrium reached." <<endl;
+            k=tsteps;
+        }
+        B=A;
+    }
+    for( int i = 0; i<nx; i++){
+        for(int j=0; j<ny; j++){
+         gfile << setw(20) << setprecision(8) << A(i,j);
+         }
+    }
+
+    gfile <<endl;
+    B=A;
+    gfile.close();
+    //return MaxIterations;
+
+}
+
+
+double Q_radioactive_decay(double x,double rho, double cp, double delta_t, int tstep){
+  //return 0;
+  double L = 120;
+  //Upper crust
+  if (x <= ( (1/L) *20 ) ){ // Scaled to L
+    return (1.44*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+
+
+  //Lower crust
+  if (x <= ( (1/L) *40 ) ){ // Scaled to L
+      return (0.35*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+
+
+  //The mantle
+  if (x <= ( (1/L) *120 ) ){ // Scaled to L
+    double time = tstep*delta_t/60/60/24/365/pow(10,9);// Time in Giga years
+    double U  = 0.2 *pow(0.5 , time/4.47);    // 4.47  Giga years;
+    double Th = 0.2 *pow(0.5 , time/14.0);  //  14.0   Giga years;
+    double K  = 0.1 *pow(0.5 , time/1.25);      //   1.25  Giga years;
+
+    return ((0.05+(U+Th+K))*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  }
+  cout<<"Check"<<endl;
+ return 0;
+}
+void simulation_implemented_enrichment_decay(int nx,int ny, double dt, double dxy, mat &A, int tsteps,int start_step){
+    //Simulation spesific constants ;
+
+    double rho = pow(3.510,3);      // Densety              ;       Kg/m^3
+    double cp = 1000;               // Heat capasity        ;       J/Kg/ degree Celcius
+    double k = 2.5;                 // Thermal conductivity ;       W/m/ degree Celcius
+
+
+    //Backward Euler ;
+
+    mat B = A; //Gammel A
+    double D = dt/(dxy*dxy)*k/(rho*cp);
+    double scaled_x;
+
+
+    //Starter iterative løser
+    for(int k=start_step; k<tsteps; k++){
+
+        for(int i = 1; i<nx-1; i++){
+            scaled_x =(double)i/ (double)nx;
+            for(int j=1; j<ny-1; j++){
+
+                A(i,j) = ( (B(i,j) + D*(B(i+1,j) + B(i,j+1) -4*B(i,j) + B(i-1,j) + B(i,j-1))))+Q_radioactive_decay(scaled_x,rho,cp,dt,k);
+            }
+        }
+
+
+        B=A;
+    }
+
+
+    //return MaxIterations;
+
+}
+
 #endif // PDE_TWO_DIMENSIONAL_H
