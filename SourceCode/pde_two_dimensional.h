@@ -130,6 +130,9 @@ double Q_sim2(double x,double rho, double cp, double delta_t){
  return 0;
 }
 void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, int tsteps){
+    clock_t start, finish;
+
+
     //Simulation spesific constants ;
 
     double rho = pow(3.510,3);      // Densety              ;       Kg/m^3
@@ -154,7 +157,7 @@ void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, in
          }
     }
     gfile<<endl;
-
+    start = clock();
     //Starter iterative løser
     for(int k=0; k<tsteps; k++){
 
@@ -180,7 +183,8 @@ void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, in
         if(sqrt(sum)<abstol){
             //gfile.close();
             //return k;
-            cout<<"Ekvilibrium reached." <<endl;
+            finish = clock();
+            cout<<"Equilibrium reached at"<<k*dt/60/60/24/365/pow(10,9)<<" Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" Minutes)" <<endl;
             k=tsteps;
         }
         B=A;
@@ -192,14 +196,14 @@ void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, in
     }
 
     gfile <<endl;
-    B=A;
+    //B=A;
     gfile.close();
     //return MaxIterations;
 
 }
 
 
-double Q_radioactive_decay(double x,double rho, double cp, double delta_t, int tstep){
+double Q_radioactive_decay(double x,double rho, double cp, double delta_t, double radio_active_contribution){
   //return 0;
   double L = 120;
   //Upper crust
@@ -216,12 +220,9 @@ double Q_radioactive_decay(double x,double rho, double cp, double delta_t, int t
 
   //The mantle
   if (x <= ( (1/L) *120 ) ){ // Scaled to L
-    double time = tstep*delta_t/60/60/24/365/pow(10,9);// Time in Giga years
-    double U  = 0.2 *pow(0.5 , time/4.47);    // 4.47  Giga years;
-    double Th = 0.2 *pow(0.5 , time/14.0);  //  14.0   Giga years;
-    double K  = 0.1 *pow(0.5 , time/1.25);      //   1.25  Giga years;
 
-    return ((0.05+(U+Th+K))*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+
+    return ((0.05+(radio_active_contribution))*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
   }
   cout<<"Check"<<endl;
  return 0;
@@ -233,22 +234,33 @@ void simulation_implemented_enrichment_decay(int nx,int ny, double dt, double dx
     double cp = 1000;               // Heat capasity        ;       J/Kg/ degree Celcius
     double k = 2.5;                 // Thermal conductivity ;       W/m/ degree Celcius
 
+    //Simulation spesific operators
+    double time;   // The spesefic simulated time.
+    double U;      // Radio contribution
+    double Th;     //
+    double K;
+    double scaled_x;
 
     //Backward Euler ;
 
     mat B = A; //Gammel A
     double D = dt/(dxy*dxy)*k/(rho*cp);
-    double scaled_x;
 
 
     //Starter iterative løser
     for(int k=start_step; k<tsteps; k++){
 
+        // Precalculate radioactive contribution in the manlte.
+        time = k*dt/60/60/24/365/pow(10,9);   // Time in Giga years
+        U  = 0.2 *pow(0.5 , time/4.47);       //  Half life  ;  4.47  Giga years;
+        Th = 0.2 *pow(0.5 , time/14.0);       //  Half life  ; 14.0   Giga years;
+        K  = 0.1 *pow(0.5 , time/1.25);       //  Half life  ;  1.25  Giga years;
+
         for(int i = 1; i<nx-1; i++){
             scaled_x =(double)i/ (double)nx;
             for(int j=1; j<ny-1; j++){
 
-                A(i,j) = ( (B(i,j) + D*(B(i+1,j) + B(i,j+1) -4*B(i,j) + B(i-1,j) + B(i,j-1))))+Q_radioactive_decay(scaled_x,rho,cp,dt,k);
+                A(i,j) = ( (B(i,j) + D*(B(i+1,j) + B(i,j+1) -4*B(i,j) + B(i-1,j) + B(i,j-1))))+Q_radioactive_decay(scaled_x,rho,cp,dt,(U+Th+K));
             }
         }
 

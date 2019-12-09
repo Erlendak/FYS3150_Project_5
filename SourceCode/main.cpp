@@ -130,9 +130,8 @@ int main(){
 
 
     simulation_with_enrichment(nx, ny, dt, dxy,A, tsteps);
-   time = tsteps*dt;
-    cout<< time/60/60/24/365/pow(10,9) <<endl;
-    cout<<"success" <<endl;
+
+    cout<<"Starting main simulation..." <<endl;
 
     // Main simulation
 
@@ -145,7 +144,9 @@ int main(){
     int n_results = 10;
     tsteps = pow(10,9)*365*24*60*60/dt/n_results; // Gives us amount of time steps we need to use per result we want to note of a total of a Giga year.
     int start_step;
+    clock_t start, finish;
     for (int t = 0; t <n_results; t++){
+        start = clock();
         start_step = t*tsteps;
         simulation_implemented_enrichment_decay(nx, ny, dt, dxy,A, (t+1)*tsteps,start_step);
         for( int i = 0; i<nx; i++){
@@ -154,7 +155,8 @@ int main(){
             }
         }
         ifile<<endl;
-        cout<<"Simulated for ; "<<(t+1)*tsteps*dt/60/60/24/365/pow(10,9)<<"Giga years" <<endl;
+        finish = clock();
+        cout<<"Simulated for ; "<<(t+1)*tsteps*dt/60/60/24/365/pow(10,9)<<" Giga years (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" Minutes)"  <<endl;
     }
 
     ifile.close();

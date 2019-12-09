@@ -248,6 +248,8 @@ double Q_sim1(double x,double rho, double cp, double delta_t){
 }
 
 vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, double delta_t){
+     clock_t start, finish;
+
 
     //Simulation spesific constants ;
 
@@ -282,7 +284,7 @@ vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, 
       // for (int i = 1; i <= n; i++){
         //ans(0,(i-1)) = u(i);
        //}
-
+       start = clock();
        // Time iteration
        for (int t = 1; t <= tsteps; t++) {
           //  here we solve the tridiagonal linear set of equations,
@@ -314,7 +316,9 @@ vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, 
           }
 
           if(sqrt(sum)<tol){
-              cout<<"equalibrium reached" <<endl;
+              finish = clock();
+
+              cout<<"Equilibrium reached at "<<t*delta_t/60/60/24/365/pow(10,9) << " Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" minutes)" <<endl;
               return y;
           }
 
