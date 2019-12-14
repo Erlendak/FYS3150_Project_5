@@ -48,7 +48,7 @@ void test_jacobi_solver(){
     double dx = 1.0/(n-1);
     double dt = 0.01*dx*dx;
 
-    int itcount = JacobiSolver(n,dt,dx,A,tol);
+    int itcount = JacobiSolver(n,n,dt,dx,A,tol);
 
     // Test the Soultution
     double sum = 0;

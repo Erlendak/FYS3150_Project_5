@@ -224,28 +224,34 @@ mat crank_nicolson(int n, int tsteps, double delta_x,double alpha){
 }
 
 
-double Q_sim1(double x,double rho, double cp, double delta_t){
-  //return 0;
-  double L = 120;
-  //Upper crust
-  if (x <= ( (1/L) *20 ) ){ // Scaled to L
-    return (1.44*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+double Q(double x,double rho, double cp, double delta_t){
+
+  /*
+  In this function we find the correct amount of heat production at a given depth,
+  where we do not have a radioactive heat contribution in the mantle. So this function
+  gives the appropriate initial condtions for simulating with radioactive contribution.
+  */
+
+
+  // Heat production in the upper crust.
+  if (x <= 0.16667 ){ // 0-20 Kilo meters scaled to the total 120 Kilo meters.
+    return (1.44*pow(10,-6)*delta_t/(rho*cp)); // Degree Celcius
   }
 
 
-  //Lower crust
-  if (x <= ( (1/L) *40 ) ){ // Scaled to L
-      return (0.35*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+  // Heat production in the lower crust.
+  if (x <= 0.33334 ){ // 20-40 Kilo meters scaled to the total 120 Kilo meters.
+      return (0.35*pow(10,-6)*delta_t/(rho*cp)); // Degree Celcius
   }
 
 
-  //The mantle
-  if (x <= ( (1/L) *120 ) ){ // Scaled to L
-    return (0.05*pow(10,-6)*delta_t/(rho*cp)); // Need to be scaled appropriatly
+ // Heat production int the mantle.
+  if (x <= 1 ){ // 40-120 Kilo meters scaled to the total 120 Kilo meters.
+    return (0.05*pow(10,-6)*delta_t/(rho*cp)); // Degree Celcius
   }
-  cout<<"Check"<<endl;
- return 0;
+  throw "Syntax Error : Q() reached a serious problem. \nMay not be scaled proparly";
 }
+
 
 vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, double delta_t){
      clock_t start, finish;
@@ -295,7 +301,7 @@ vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, 
           // replace previous time solution with new
           for (int i = 1; i < n; i++) {
             scale_op = (double)i/ (double)n;
-            y(i) = y(i)+(Q_sim1(scale_op,rho,cp, delta_t));
+            y(i) = y(i)+(Q(scale_op,rho,cp, delta_t));
            // cout<<scale_op<<endl;
 
           }
@@ -318,7 +324,8 @@ vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, 
           if(sqrt(sum)<tol){
               finish = clock();
 
-              cout<<"Equilibrium reached at "<<t*delta_t/60/60/24/365/pow(10,9) << " Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" minutes)" <<endl;
+              cout<<"Simulation in one dimention:\nEquilibrium reached at "<<t*delta_t/60/60/24/365/pow(10,9)<<
+              " Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" minutes)\n" <<endl;
               return y;
           }
 
@@ -328,9 +335,8 @@ vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, 
        //...
       //cout<<ans<<endl;
       return(y);
-
-
-
 }
+
+
 
 #endif // PDE_SINGLE_DIMENSIONAL_H

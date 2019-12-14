@@ -88,10 +88,10 @@ int main(){
     ffile << setw(20) << setprecision(8) <<  crank_nicolson((1/delta_x2)-1, tsteps, delta_x2, alpha)<<endl;
     ffile.close();
 
-
-    diffusjon2dim(10);
-
 */
+    diffusjon_example_2dim(10);
+
+
     int n= 120;
     int tsteps = 100000000;
     double delta_x = 1000;
@@ -104,9 +104,6 @@ int main(){
     vec no_enrichment = simulation_before_radioactive_enrichment(n, tsteps, delta_x,delta_t);
     hfile << setw(20) << setprecision(8) << no_enrichment <<endl;
     hfile.close();
-
-    double time = tsteps * delta_t/60/60/24/365;
-    cout<< time/pow(10,9) <<endl;//in Giga years
 
     //Grensebetingelser
    int nx = 120;
@@ -160,6 +157,7 @@ int main(){
     }
 
     ifile.close();
+
     return 0;
 
 };
