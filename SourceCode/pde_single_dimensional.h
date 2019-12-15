@@ -8,148 +8,121 @@
 #include <time.h>
 #include <armadillo>
 
+
 using namespace std;
 using namespace arma;
 
-inline double g(double x){return 0;} //abs(0.01*(x-0.5));}
-
-inline double a(double t){return (1); //+(t/10));
-}
-inline double b(double t){return (0);//(2*t/20);
-}
-
-inline double f(double x){return 100.0*exp(-10.0*x);
-}
 
 
 
-void tridag(double a,double d,double c,vec &y,vec &u, int N){
-/*
-  double ac0 = a;
-  vec b = u;
+mat forward_euler(double delta_x, double delta_t, double lenght, double time, vec u){
 
-  vec tmp_c(N-2);//(N-2)
+    /*
+    The explicit scheme using the Forward Euler method. This function takes in the lenght step size, time step size,
+    the total lenght, the total lenght and initial condition. Keeping the boundary conditiion we find the distribution
+    after the given time. We are returning the results as a matrix that evolves based of time.
+    */
 
-   //b(0) = 0;
-   tmp_c(0) = tmp_c(0)/d;
-   b(1) = b(1)/d;
-   for (int i =2; i<(N-1);i++ ){
-       tmp_c(i-1) = (     ac0  /  ( d - (ac0*tmp_c(i-2))  )     );
-       b(i) = ( (b(i) -(ac0*b(i-1) ) )   / (d- (ac0*tmp_c(i-2)))   );// #d[i] - (_b[i-1] * a[i-1] )  );
-    }
+    int n = (int)(lenght/delta_x);    // Find amount of points needed for a lenght with a specific lenght step.
+    int tsteps = (int)(time/delta_t); // Find amount of point needed for a time with a specific time step.
 
-   for (int i = 1; i<N-1;i++){
-       b((N-1)-i) = b((N-1)-i) - (tmp_c((N-2)-i)*b(N-i) );
-   }
-   //for (int i =1; i<N;i++){
-    // b(i) =u(i-1);
-   //}
-   y=b;
-*/
-    double ac0 = a;
-    vec b =  u;
-
-    vec tmp_c(N-2);
-
-     b(0) = 0;
-     tmp_c(0) = tmp_c(0)/d;
-     b(1) = b(1)/d;
-     for (int i =2; i<(N-1);i++ ){
-         tmp_c(i-1) = (     ac0  /  ( d - (ac0*tmp_c(i-2))  )     );
-         b(i) = ( (b(i) -(ac0*b(i-1) ) )   / (d- (ac0*tmp_c(i-2)))   );// #d[i] - (_b[i-1] * a[i-1] )  );
-      }
-
-     for (int i = 1; i<N-1;i++){
-         b((N-1)-i) = b((N-1)-i) - (tmp_c((N-2)-i)*b(N-i) );
-     }
-     y = b;
-
-  }
-
-
-
-
-
-mat forward_euler(double delta_x, double delta_t){
-    int n = (int)(1/delta_x)-1;
-    int tsteps = (int)(1/delta_t)-1; // delta_t/delta_x^2  =<  1/2
+    //Setup the result matrix to keep eye on the results evloution based on time.
     mat ans(tsteps+1,n+1);
-
-    vec u(n+1); // Setup our inital condition vector
-    vec unew(n+1);
-
-    double x;
-    double alpha = delta_t/(delta_x*delta_x);
-    //  First we set initialise the new and old vectors
-    //  Here we have chosen the boundary conditions to be zero.
-    //  n+1 is the number of mesh points in x
-    //  Armadillo notation for vectors
-    u(0) = unew(0) = a(0);
-    u(n) = unew(n) = b(tsteps);
-    for (int i = 1; i < n; i++) {
-        x =  i*delta_x;
-        //  initial condition
-        u(i) =  g(x);
-        //  intitialise the new vector
-        unew(i) = 0;
-    }
-   for (int i = 0; i <= n; i++){
+    // Saves the initial conditions.
+    for (int i = 0; i <= n; i++){
     ans(0,i) = u(i);
-   }
+    }
+
+    //Forward Euler.
+    vec unew = u;
+    double alpha = delta_t/(delta_x*delta_x);
+
    // Time integration
    for (int t = 1; t <= tsteps; t++) {
-     unew(0) = a(t*delta_t);
-     unew(n) = b(t*delta_t);
+
      for (int i = 1; i < n; i++) {
-             // Discretized diff eq
-             unew(i) = alpha * u(i-1) +( (1 - 2*alpha) * u(i) )+ (alpha * u(i+1));
-      }
+       unew(i) = alpha * u(i-1) +( (1 - 2*alpha) * u(i) )+ (alpha * u(i+1));
+     }
+
+     // Save results at given time iteration.
      for (int i = 0; i <= n; i++){
        ans(t,i) = unew(i);
      }
-     u = unew;
-
-      //cout<<unew <<endl;
-       //  note that the boundaries are not changed.
-     }
-   //cout<< ans <<endl;
+     u = unew; // Set the old time step to new
+   }
    return ans;
-   //cout<< ans <<endl;
-};
+}
 
-//  parts of the function for backward Euler
 
-mat backward_euler(int n, int tsteps, double delta_x, double alpha)
-{
 
+
+void fast_special_thomas_algorithm(double a,double d,double c,vec &y,vec &u, int N){
+
+    /*
+    This is the special Thomas algorithm from project 1, which solves a equation system on a tridiagonal matrix form.
+    Asumming that the upper and lower diagonal is constant and that the main diagonal is constant through the equation.
+    */
+
+    double ac0 = a; // constant for upperdiagonal and lower diagonal
+
+    vec b =  u; // Makes copy of old time step so that we could do row operations on it.
+    vec tmp_c(N-2); // Saves the Gauss-row operations on the upper diagonal.
+
+    // Initial conditions.
+    b(0) = 0; // Set up boundary conditions for the equation system.
+    tmp_c(0) = tmp_c(0)/d; // First Guass operation on the upper diagonal
+    b(1) = b(1)/d; // Frist Gauss operation on the solution.
+
+    //Forward substitution.
+    for (int i =2; i<(N-1);i++ ){
+      tmp_c(i-1) = (     ac0  /  ( d - (ac0*tmp_c(i-2))  )     );
+      b(i) = ( (b(i) -(ac0*b(i-1) ) )   / (d- (ac0*tmp_c(i-2)))   );
+    }
+
+    //Backward substitution.
+    for (int i = 1; i<N-1;i++){
+      b((N-1)-i) = b((N-1)-i) - (tmp_c((N-2)-i)*b(N-i) );
+    }
+    y = b;
+}
+
+
+mat backward_euler(double delta_x, double delta_t, double lenght, double time, vec u){
+  /*
+  Implicit scheme using the backward Euler method,
+  */
+
+   int n = (int)(lenght/delta_x)+1;    // Find amount of points needed for a lenght with a specific lenght step.
+   int tsteps = (int)(time/delta_t); // Find amount of point needed for a time with a specific time step.
+
+   // Save results.
    mat ans(tsteps+1,n);
-
-   double a, b, c;
-   vec u(n+1); // This is u  of Au = y
-   vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
+   for (int i = 0; i < n; i++){
+    ans(0,i) = u(i);
+   }
 
 
    // Initial conditions
-   for (int i = 1; i < n; i++) {
-      y(i) = u(i) = g(delta_x*i);
+   vec v(n+1); // This is u  of Av = y
+   for (int i = 1; i <= n; i++) {
+      v(i) = u(i-1);
    }
-   // Boundary conditions (zero here)
-   y(n) = u(n) = 1;
-   u(0) = y(0)= 0;
-   // Matrix A, only constants
-   a = c = - alpha;
-   b = 1 + (2*alpha);
-   for (int i = 1; i <= n; i++){
-    ans(0,(i-1)) = u(i);
-   }
+   vec y = v; // Right side of matrix equation Au=y, the solution at a previous step
+
+
+   // Backwards Euler :
+   double alpha =  delta_t/(delta_x*delta_x);
+   double a = - alpha;
+   double c = - alpha;
+   double b = 1 + (2*alpha);
 
    // Time iteration
    for (int t = 1; t <= tsteps; t++) {
       //  here we solve the tridiagonal linear set of equations,
-      tridag(a, b, c, y, u, n+1);
+      fast_special_thomas_algorithm(a, b, c, y, v, n+1);
       // boundary conditions
-      y(0) = 0;
-      y(n) = 1;
+      y(0) = u(0);
+      y(n) = u(n-1);
 
       for (int i = 1; i <= n; i++){
         ans(t,(i-1)) = y(i);
@@ -157,7 +130,7 @@ mat backward_euler(int n, int tsteps, double delta_x, double alpha)
 
       // replace previous time solution with new
       for (int i = 0; i <= n; i++) {
-      u(i) = y(i);
+      v(i) = y(i);
       }
       //  You may consider printing the solution at regular time intervals
       //....   // print statements
@@ -169,31 +142,14 @@ mat backward_euler(int n, int tsteps, double delta_x, double alpha)
 
 }
 
-void tridiag2(double a, double b, double c,vec r, vec &u, int n){
 
-    vec g(n+1);
-    vec d(n+1);
 
-    for(int i = 1; i<=n; i++){
-        g(i) = r(i);
-    }
 
-     d(0) = d(n) = 1;
-
-    //Forward sub
-    for(int i=1;i<=n-1;i++){
-      d(i) = b-(a*c)/d(i-1);
-      g(i) = g(i)-(a*g(i-1))/d(i-1);
-    }
-
-    //Backward sub
-    for(int i=n-1; i>0; i--){
-        u(i) = (g(i)-c*u(i+1))/d(i);
-    }
-
-}
 mat crank_nicolson(int n, int tsteps, double delta_x,double alpha){
-    mat ans(tsteps,n+1);
+    /*
+    Implicit scheme using the Crank Nicolson method,
+    */
+    mat ans(tsteps,n);
     double a,b,c;
     vec u(n+1);
     vec r(n+1);
@@ -210,18 +166,22 @@ mat crank_nicolson(int n, int tsteps, double delta_x,double alpha){
             r(i) = alpha*u(i-1) + (2-2*alpha)*u(i) + alpha*u(i+1);
         }
         r(0) = 0;
+        r(1) = 0;
         r(n) = 1;
 
-        tridiag2(a,b,c,r,u,n);
+        fast_special_thomas_algorithm(a,b,c,u,r,n+1);
         u(0) = 0;
         u(n) = 1;
-        for(int i=0; i<=n; i++){
-            ans(t,i)= u(i);
+        for(int i=1; i<=n; i++){
+            ans(t,i-1)= u(i);
         }
-        }
+    }
+    //cout << u<<endl;
     return(ans);
-    //u.print();
+
 }
+
+
 
 
 double Q(double x,double rho, double cp, double delta_t){
@@ -229,7 +189,7 @@ double Q(double x,double rho, double cp, double delta_t){
   /*
   In this function we find the correct amount of heat production at a given depth,
   where we do not have a radioactive heat contribution in the mantle. So this function
-  gives the appropriate initial condtions for simulating with radioactive contribution.
+  gives the appropriate initial conditions for simulating with radioactive contribution.
   */
 
 
@@ -253,8 +213,16 @@ double Q(double x,double rho, double cp, double delta_t){
 }
 
 
-vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, double delta_t){
-     clock_t start, finish;
+vec simulation_no_radioactive_enrichment(int n, int tsteps, double delta_x, double delta_t){
+
+    /*
+    The first simulation of the physical system, we are simulating the heat distrubution in the lithosphere.
+    Where the heat production is constant at a specific depth so we are expecting some sort of symmetry, so
+    we are only simulating in one dimention. The result from this simulation can we use further on as
+    bounduary conditions, for the simulation with a specific radioactive heat contribution in a limited area.
+    */
+
+     clock_t start, finish; // initialize time operators.
 
 
     //Simulation spesific constants ;
@@ -264,78 +232,69 @@ vec simulation_before_radioactive_enrichment(int n, int tsteps, double delta_x, 
     double rho = pow(3.510,3);      // Densety              ;       Kg/m^3
     double cp = 1000;               // Heat capasity        ;       J/Kg/ degree Celcius
     double k = 2.5;                 // Thermal conductivity ;       W/m/ degree Celcius
+
+    //Simulation spesific operators ;
+    double scale_x;                 // Scaled lenght of x from 120 Kilo meters to 1.
+    double sum;                     // Finds the total diffrence between the diffrent time steps.
+    double tol = 10e-8;             // The tolerance set to consider a state reached eqilibrium.
+
+
     //Backward Euler ;
+    double alpha = delta_t/(delta_x*delta_x); // Backwards Euler specific constant.
+    double a = - alpha*k/(rho*cp); // Backwards Euler specific operators.
+    double c = - alpha*k/(rho*cp); // Backwards Euler specific operators.
+    double b = 1 + (2*alpha)*k/(rho*cp); // Backwards Euler specific operators.
+    vec u(n+1); // This is u  of Au = y
+    vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
 
-       //mat ans(tsteps+1,n);
-       double scale_op, sum;
-       double tol = 0.1;
-       double a, b, c;
-       vec u(n+1); // This is u  of Au = y
-       vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
+    // Initial conditions
+    for (int i = 1; i < n; i++) {
+      y(i) = u(i) = i*temp_mantle/n; // Initial conditions, set so that we should reach equalibrium state the fastest.
+    }
 
-       // Initial conditions
-       for (int i = 1; i < n; i++) {
-          y(i) = u(i) = i*temp_mantle/n; // Initial condtions, set for fastest equalibrium state
-       }
-
-       double alpha = delta_t/(delta_x*delta_x);
-       // Boundary conditions
-       y(n) = u(n) = temp_mantle;
-       u(0) = y(0)= temp_crust;
-       // Matrix A, only constants
-       a = c = - alpha*k/(rho*cp);
-       b = 1 + (2*alpha)*k/(rho*cp);
-
-       // Save our results for time the first time step.
-      // for (int i = 1; i <= n; i++){
-        //ans(0,(i-1)) = u(i);
-       //}
-       start = clock();
-       // Time iteration
-       for (int t = 1; t <= tsteps; t++) {
-          //  here we solve the tridiagonal linear set of equations,
-          tridag(a, b, c, y, u, n+1);
+    // Boundary conditions
+    y(n) = u(n) = temp_mantle;
+    u(0) = y(0)= temp_crust;
 
 
+    start = clock(); // Start taking time of the simulation.
+    // Start time iteration.
+    for (int t = 1; t <= tsteps; t++) {
 
-          // replace previous time solution with new
-          for (int i = 1; i < n; i++) {
-            scale_op = (double)i/ (double)n;
-            y(i) = y(i)+(Q(scale_op,rho,cp, delta_t));
-           // cout<<scale_op<<endl;
+      // Solve the tridiagonal linear set of equations using the fast special Thomas algorithm.
+      fast_special_thomas_algorithm(a, b, c, y, u, n+1);
 
-          }
-          u(0)=y(0) = temp_crust;
-          u(n)=y(n) = temp_mantle;
+      // Take heat production into account at.
+      for (int i = 1; i < n; i++) {
+        scale_x = (double)i/ (double)n;
+        y(i) = y(i)+(Q(scale_x,rho,cp, delta_t));
+      }
 
-          //for (int i = 1; i <= n; i++){
-            //ans(t,(i-1)) = u(i);
-          //}
+      //Check up upon that the boundary conditions is set corrected.
+      u(0)=y(0) = temp_crust;
+      u(n)=y(n) = temp_mantle;
 
+      // Setup new time step, also calculating the difference between the seperath steps.
+      sum = 0.0;
+      for (int i = 0; i <= n; i++) {
+        sum += (u(i)-y(i)) * ( y(i)- u(i) );
+        u(i) = y(i); // Replace previous time solution with new.
+      }
 
-          sum = 0.0;
+      // Check if we reached equilibrium yet.
+      if(sqrt(sum)<tol){
+        // Gives information on how the simulation have behaved.
+        finish = clock(); // Gives the time at which the simulation has found equilibrium state.
+        cout<<"Simulation in one dimention:\nEquilibrium reached at "<<t*delta_t/60/60/24/365/pow(10,9)<<
+        " Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" minutes)\n" <<endl;
+        return y; // Returns the eqilibrium state of the system. for further use.
+      }
 
-          // replace previous time solution with new
-          for (int i = 0; i <= n; i++) {
-            sum += (u(i)-y(i)) * ( y(i)- u(i) );
-            u(i) = y(i);
-          }
+    }// The end of time iteration.
 
-          if(sqrt(sum)<tol){
-              finish = clock();
-
-              cout<<"Simulation in one dimention:\nEquilibrium reached at "<<t*delta_t/60/60/24/365/pow(10,9)<<
-              " Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" minutes)\n" <<endl;
-              return y;
-          }
-
-          //  You may consider printing the solution at regular time intervals
-          //....   // print statements
-       }  // end time iteration
-       //...
-      //cout<<ans<<endl;
-      return(y);
+    throw "Simulation Error : simulation_no_radioactive_enrichment() \nNever reached the eqilibrium state.";
 }
+
 
 
 

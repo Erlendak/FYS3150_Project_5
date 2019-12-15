@@ -150,7 +150,7 @@ double Q_enriched(double x,double rho, double cp, double delta_t){
 void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, int tsteps){
 
     /*
-    Simulate the temperature distrubution in the lithosphere to an equilibrium state, which we can use as an initial condtion
+    Simulate the temperature distrubution in the lithosphere to an equilibrium state, which we can use as an initial condition
     in our main simulation. We take into account the heat production in the lithosphere and a radioactive heat contribution in
     the mantle, but we do not yet take into account the decay in radio activity, since we are looking for an equilibrium state.
     */
@@ -165,9 +165,9 @@ void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, in
     const double k = 2.5;                 // Thermal conductivity ;       W/m/ degree Celcius
 
     //Simulation spesific operators ;
-    double scaled_x;  // Scaled lenght of x from 120 Kilo meters to 1.
-    double Q;         // The specific heat production at a given depth, time and time step.
-
+    double scaled_x;                      // Scaled lenght of x from 120 Kilo meters to 1.
+    double Q;                             // The specific heat production at a given depth, time and time step.
+    double abstol = 10e-4;                // The tolerance set to consider a state reached eqilibrium.
 
     // Initialize file to save results.
     ofstream gfile;
@@ -185,7 +185,6 @@ void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, in
 
     //Backward Euler ;
     mat B = A; //Gammel A
-    double abstol = 10e-4;
     double D = dt/(dxy*dxy)*k/(rho*cp);
 
     start = clock(); // Start taking time of the simulation.

@@ -15,52 +15,93 @@ int main(){
 
     //test_jacobi_solver();
     //test_forward_euler();
-/*
+
+    //Initialize variabels used multiple times ;
+    clock_t start, finish; // initialize time operators.
+
+    // Setup examples ;
     double delta_x1 = 0.1;
     double delta_x2 = 0.01;
     double delta_t = 0.000005;
+    double example_lenght = 1;
+    double example_time = 1;
+    int example_n1 =  (int)(example_lenght/delta_x1);
+    int example_n2 = (int)(example_lenght/delta_x2);
+
+    // Setup inital conditions for example.
+    vec u1 = zeros<vec>(example_n1+1);     // For example with delta x = 0.1.
+    vec u2 = zeros<vec>(example_n2+1);     // For example with delta x = 0.01.
+    u1(example_n1) = u2(example_n2) = 1;   // Boundary condition.
+
+
+
 
     //Forward Euler
 
+
     //Delta X ; 0.1
+
     ofstream afile;
     string afilename = "RESULTS/forward_euler_dt01.dat";
     afile.open(afilename);
     afile << setiosflags(ios::showpoint | ios::uppercase);
-    afile << setw(20) << setprecision(8) << forward_euler(delta_x1,delta_t) <<endl;
+    start = clock();
+    afile << setw(20) << setprecision(8) << forward_euler(delta_x1,delta_t, example_lenght, example_time, u1) <<endl;
+    finish = clock();
     afile.close();
 
+    cout<<"Example simulation using Forward Euler with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x1<<
+    " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
+
+
     //Delta X ; 0.01
+
     ofstream bfile;
     string bfilename = "RESULTS/forward_euler_dt001.dat";
     bfile.open(bfilename);
     bfile << setiosflags(ios::showpoint | ios::uppercase);
-    bfile << setw(20) << setprecision(8) << forward_euler(delta_x2,delta_t) <<endl;
+    start = clock();
+    bfile << setw(20) << setprecision(8) << forward_euler(delta_x2,delta_t, example_lenght, example_time, u2) <<endl;
+    finish = clock();
     bfile.close();
+
+    cout<<"Example simulation using Forward Euler with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x2<<
+    " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
+
 
 
 
     //Backward Euler ;
 
+
     // Delta X ; 0.1
-    int tsteps = (int)(1/delta_t)-1;
-    double alpha =  delta_t/(delta_x1*delta_x1);
+
     ofstream cfile;
     string cfilename = "RESULTS/backward_euler_dt01.dat";
     cfile.open(cfilename);
     cfile << setiosflags(ios::showpoint | ios::uppercase);
-    cfile << setw(20) << setprecision(8) << backward_euler((1/delta_x1)-1, tsteps, delta_x1, alpha) <<endl;
+    start = clock();
+    cfile << setw(20) << setprecision(8) << backward_euler(delta_x1,delta_t, example_lenght, example_time, u1) <<endl;
+    finish = clock();
     cfile.close();
 
+    cout<<"Example simulation using Backward Euler with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x1<<
+    " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
 
     //Delta X ; 0.01
-    alpha =  delta_t/(delta_x2*delta_x2);
+
     ofstream dfile;
     string dfilename = "RESULTS/backward_euler_dt001.dat";
     dfile.open(dfilename);
     dfile << setiosflags(ios::showpoint | ios::uppercase);
-    dfile << setw(20) << setprecision(8) << backward_euler((1/delta_x2)-1, tsteps, delta_x2, alpha) <<endl;
+    start = clock();
+    dfile << setw(20) << setprecision(8) << backward_euler(delta_x2,delta_t, example_lenght, example_time, u2) <<endl;
+    finish = clock();
     dfile.close();
+
+    cout<<"Example simulation using Backward Euler with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x2<<
+    " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
+
 
 
 
@@ -68,8 +109,9 @@ int main(){
 
 
     //Delta X ; 0.1
-    tsteps = (int)(1/delta_t)-1;
-    alpha =  delta_t/(delta_x1*delta_x1);
+
+    double tsteps = (int)(1/delta_t)-1;
+    double alpha =  delta_t/(delta_x1*delta_x1);
     cout<<alpha<<endl;
     ofstream efile;
     string efilename = "RESULTS/crank_nicolson_dt01.dat";
@@ -88,7 +130,7 @@ int main(){
     ffile << setw(20) << setprecision(8) <<  crank_nicolson((1/delta_x2)-1, tsteps, delta_x2, alpha)<<endl;
     ffile.close();
 
-*/
+/*
     diffusjon_example_2dim(10);
 
 
@@ -101,7 +143,7 @@ int main(){
     string hfilename = "RESULTS/simulation_no_enrichment.dat";
     hfile.open(hfilename);
     hfile << setiosflags(ios::showpoint | ios::uppercase);
-    vec no_enrichment = simulation_before_radioactive_enrichment(n, tsteps, delta_x,delta_t);
+    vec no_enrichment = simulation_no_radioactive_enrichment(n, tsteps, delta_x,delta_t);
     hfile << setw(20) << setprecision(8) << no_enrichment <<endl;
     hfile.close();
 
@@ -112,16 +154,16 @@ int main(){
    double dt = delta_t;
    mat A = zeros<mat>(nx,ny);
 
-   // Inital condtions
+   // Inital conditions
    for(int j =0; j<ny; j++){
        for(int i =0; i<nx; i++){
-           A(i,j)    = no_enrichment(i); //Depth condtions use vector from task above
-           //A(i,ny-1) = 1; //Depth condtions use vector from task above
+           A(i,j)    = no_enrichment(i); //Depth conditions use vector from task above
+           //A(i,ny-1) = 1; //Depth conditions use vector from task above
         }
     }
    for(int j =0; j<ny; j++){
-       A(0,j)    = 8; //Depth condtions use vector from task above
-       A(nx-1,j) = 1300; //Depth condtions use vector from task above
+       A(0,j)    = 8; //Depth conditions use vector from task above
+       A(nx-1,j) = 1300; //Depth conditions use vector from task above
     }
    tsteps = 1000000;
 
@@ -157,7 +199,7 @@ int main(){
     }
 
     ifile.close();
-
+*/
     return 0;
 
 };
