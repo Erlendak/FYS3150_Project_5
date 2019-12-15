@@ -13,8 +13,10 @@ using namespace std;
 
 int main(){
 
-    //test_jacobi_solver();
-    //test_forward_euler();
+    test_jacobi_solver();
+    test_forward_euler();
+    test_backward_euler();
+    test_crank_nicolson();
 
     //Initialize variabels used multiple times ;
     clock_t start, finish; // initialize time operators.
