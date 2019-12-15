@@ -37,20 +37,20 @@ mat forward_euler(double delta_x, double delta_t, double lenght, double time, ve
     vec unew = u;
     double alpha = delta_t/(delta_x*delta_x);
 
-   // Time integration
-   for (int t = 1; t <= tsteps; t++) {
+    // Time integration
+    for (int t = 1; t <= tsteps; t++) {
 
-     for (int i = 1; i < n; i++) {
-       unew(i) = alpha * u(i-1) +( (1 - 2*alpha) * u(i) )+ (alpha * u(i+1));
-     }
+      for (int i = 1; i < n; i++) {
+        unew(i) = alpha * u(i-1) +( (1 - 2*alpha) * u(i) )+ (alpha * u(i+1));
+      }
 
-     // Save results at given time iteration.
-     for (int i = 0; i <= n; i++){
-       ans(t,i) = unew(i);
-     }
-     u = unew; // Set the old time step to new
-   }
-   return ans;
+      // Save results at given time iteration.
+      for (int i = 0; i <= n; i++){
+        ans(t,i) = unew(i);
+      }
+      u = unew; // Set the old time step to new
+    }
+    return ans;
 }
 
 
@@ -88,42 +88,45 @@ void fast_special_thomas_algorithm(double a,double d,double c,vec &y,vec &u, int
 
 
 mat backward_euler(double delta_x, double delta_t, double lenght, double time, vec u){
-  /*
-  Implicit scheme using the backward Euler method,
-  */
+    /*
+    Implicit scheme using the backward Euler method, and the Thomas algorithm to solve the partial differential eqaution.
+    Takes inn the step lenght, time step lenght, total lenght, total time and the initial condition, sets up system of equations
+    on matrix form and solves based on the Thomas algorithm.
+    */
 
-   int n = (int)(lenght/delta_x)+1;    // Find amount of points needed for a lenght with a specific lenght step.
-   int tsteps = (int)(time/delta_t); // Find amount of point needed for a time with a specific time step.
+    int n = (int)(lenght/delta_x)+1;    // Find amount of points needed for a lenght with a specific lenght step.
+    int tsteps = (int)(time/delta_t); // Find amount of point needed for a time with a specific time step.
 
-   // Save results.
-   mat ans(tsteps+1,n);
-   for (int i = 0; i < n; i++){
-    ans(0,i) = u(i);
-   }
+    // Save results.
+    mat ans(tsteps+1,n);
+    for (int i = 0; i < n; i++){
+      ans(0,i) = u(i);
+    }
 
 
-   // Initial conditions
-   vec v(n+1); // This is u  of Av = y
-   for (int i = 1; i <= n; i++) {
+    // To fit with the initial condition of the Thomas algorithm function we need a vector +1 longer than our inital condition u.
+    vec v(n+1); // This is v of Av = y
+    for (int i = 1; i <= n; i++) {
       v(i) = u(i-1);
-   }
-   vec y = v; // Right side of matrix equation Au=y, the solution at a previous step
+    }
+    vec y = v; // Right side of matrix equation Av=y, the solution at a previous step
 
 
-   // Backwards Euler :
-   double alpha =  delta_t/(delta_x*delta_x);
-   double a = - alpha;
-   double c = - alpha;
-   double b = 1 + (2*alpha);
+    // Backwards Euler :
+    double alpha =  delta_t/(delta_x*delta_x);
+    double a = - alpha;
+    double c = - alpha;
+    double b = 1 + (2*alpha);
 
-   // Time iteration
-   for (int t = 1; t <= tsteps; t++) {
+    // Time iteration.
+    for (int t = 1; t <= tsteps; t++) {
       //  here we solve the tridiagonal linear set of equations,
       fast_special_thomas_algorithm(a, b, c, y, v, n+1);
       // boundary conditions
       y(0) = u(0);
       y(n) = u(n-1);
 
+      // Save the results as an evolution based on time.
       for (int i = 1; i <= n; i++){
         ans(t,(i-1)) = y(i);
       }
@@ -132,53 +135,61 @@ mat backward_euler(double delta_x, double delta_t, double lenght, double time, v
       for (int i = 0; i <= n; i++) {
       v(i) = y(i);
       }
-      //  You may consider printing the solution at regular time intervals
-      //....   // print statements
-   }  // end time iteration
-   //...
-  //cout<<ans<<endl;
-  return(ans);
 
-
+    } // end time iteration
+    return(ans);
 }
 
 
 
 
-mat crank_nicolson(int n, int tsteps, double delta_x,double alpha){
+mat crank_nicolson(double delta_x, double delta_t, double lenght, double time, vec u){
     /*
-    Implicit scheme using the Crank Nicolson method,
+    Implicit scheme using the Crank Nicolson method, and the Thomas algorithm to solve the partial differential eqaution.
+    Takes inn the step lenght, time step lenght, total lenght, total time and the initial condition, sets up system of equations
+    on matrix form and solves based on the Thomas algorithm.
     */
-    mat ans(tsteps,n);
-    double a,b,c;
-    vec u(n+1);
-    vec r(n+1);
 
+    int n = (int)(lenght/delta_x)+1;    // Find amount of points needed for a lenght with a specific lenght step.
+    int tsteps = (int)(time/delta_t); // Find amount of point needed for a time with a specific time step.
+
+    // Save results.
+    mat ans(tsteps+1,n);
+    for (int i = 0; i < n; i++){
+      ans(0,i) = u(i);
+    }
+
+
+    // To fit with the initial condition of the Thomas algorithm function we need a vector +1 longer than our inital condition u.
+    vec v= zeros<vec>(n+1); // This is u  of Av = y
+    for (int i = 1; i <= n; i++) {
+       v(i) = u(i-1);
+    }
+    vec r = v; // Right side of matrix equation Au=y, the solution at a previous step
+
+    // Crank Nicolson
+    double alpha =  delta_t/(delta_x*delta_x);
+    double a,b,c;
     a = c = -alpha;
     b = 2 + 2*alpha;
-    u(0)=1;
-    for(int i=0; i<n; i++){u(i)=0; }
-    for(int i=1; i<n; i++){
-        ans(0,i)= alpha*u(i-1) + (2-2*alpha)*u(i) + alpha*u(i+1);
-    }
-    for( int t = 1; t< tsteps; t++){
+
+    // Time iteration.
+    for( int t = 1; t<= tsteps; t++){
         for(int i=1; i<n; i++){
-            r(i) = alpha*u(i-1) + (2-2*alpha)*u(i) + alpha*u(i+1);
+            r(i) = alpha*v(i-1) + (2-2*alpha)*v(i) + alpha*v(i+1);
         }
         r(0) = 0;
         r(1) = 0;
         r(n) = 1;
 
-        fast_special_thomas_algorithm(a,b,c,u,r,n+1);
-        u(0) = 0;
-        u(n) = 1;
+        fast_special_thomas_algorithm(a,b,c,v,r,n+1);
+        v(0) = 0;
+        v(n) = 1;
         for(int i=1; i<=n; i++){
-            ans(t,i-1)= u(i);
+            ans(t,i-1)= v(i);
         }
-    }
-    //cout << u<<endl;
+    } // End of time iteration.
     return(ans);
-
 }
 
 

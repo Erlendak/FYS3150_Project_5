@@ -110,25 +110,31 @@ int main(){
 
     //Delta X ; 0.1
 
-    double tsteps = (int)(1/delta_t)-1;
-    double alpha =  delta_t/(delta_x1*delta_x1);
-    cout<<alpha<<endl;
     ofstream efile;
     string efilename = "RESULTS/crank_nicolson_dt01.dat";
     efile.open(efilename);
     efile << setiosflags(ios::showpoint | ios::uppercase);
-    efile << setw(20) << setprecision(8) <<  crank_nicolson((1/delta_x1)-1, tsteps, delta_x1, alpha) <<endl;
+    start = clock();
+    efile << setw(20) << setprecision(8) <<  crank_nicolson(delta_x1,delta_t, example_lenght, example_time, u1) <<endl;
+    finish = clock();
     efile.close();
 
+    cout<<"Example simulation using Crank Nicolson with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x1<<
+    " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
+
     //Delta X ; 0.01
-    alpha =  delta_t/(delta_x2*delta_x2);
-    cout<<alpha<<endl;
+
     ofstream ffile;
     string ffilename = "RESULTS/crank_nicolson_dt001.dat";
     ffile.open(ffilename);
     ffile << setiosflags(ios::showpoint | ios::uppercase);
-    ffile << setw(20) << setprecision(8) <<  crank_nicolson((1/delta_x2)-1, tsteps, delta_x2, alpha)<<endl;
+    start = clock();
+    ffile << setw(20) << setprecision(8) <<  crank_nicolson(delta_x2,delta_t, example_lenght, example_time, u2)<<endl;
+    finish = clock();
     ffile.close();
+
+    cout<<"Example simulation using Crank Nicolson with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x2<<
+    " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
 
 /*
     diffusjon_example_2dim(10);
