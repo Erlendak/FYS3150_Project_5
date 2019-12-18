@@ -24,7 +24,7 @@ int main(){
     // Setup examples ;
     double delta_x1 = 0.1;
     double delta_x2 = 0.01;
-    double delta_t = 0.000005;
+    double delta_t = 0.00005;
     double example_lenght = 1;
     double example_time = 1;
     int example_n1 =  (int)(example_lenght/delta_x1);
@@ -138,15 +138,15 @@ int main(){
     cout<<"Example simulation using Crank Nicolson with a time step of ; "<< delta_t << " seconds and a delta x ; "<< delta_x2<<
     " Meters.\n(Simulation time ; " << ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)<<" Seconds)\n" <<endl;
 
-/*
+
     diffusjon_example_2dim(10);
 
 
     int n= 120;
     int tsteps = 100000000;
     double delta_x = 1000;
-    double delta_t = 1000000000;
-    double alpha = delta_t/(delta_x*delta_x);
+    delta_t = 1000000000;
+    //double alpha = delta_t/(delta_x*delta_x);
     ofstream hfile;
     string hfilename = "RESULTS/simulation_no_enrichment.dat";
     hfile.open(hfilename);
@@ -191,7 +191,7 @@ int main(){
     int n_results = 10;
     tsteps = pow(10,9)*365*24*60*60/dt/n_results; // Gives us amount of time steps we need to use per result we want to note of a total of a Giga year.
     int start_step;
-    clock_t start, finish;
+    //clock_t start, finish;
     for (int t = 0; t <n_results; t++){
         start = clock();
         start_step = t*tsteps;
@@ -207,7 +207,7 @@ int main(){
     }
 
     ifile.close();
-*/
+
     return 0;
 
 };

@@ -255,6 +255,7 @@ vec simulation_no_radioactive_enrichment(int n, int tsteps, double delta_x, doub
     double a = - alpha*k/(rho*cp); // Backwards Euler specific operators.
     double c = - alpha*k/(rho*cp); // Backwards Euler specific operators.
     double b = 1 + (2*alpha)*k/(rho*cp); // Backwards Euler specific operators.
+    n++;
     vec u(n+1); // This is u  of Au = y
     vec y(n+1); // Right side of matrix equation Au=y, the solution at a previous step
 
@@ -265,7 +266,7 @@ vec simulation_no_radioactive_enrichment(int n, int tsteps, double delta_x, doub
 
     // Boundary conditions
     y(n) = u(n) = temp_mantle;
-    u(0) = y(0)= temp_crust;
+    u(1) = y(1)= temp_crust;
 
 
     start = clock(); // Start taking time of the simulation.
@@ -276,18 +277,19 @@ vec simulation_no_radioactive_enrichment(int n, int tsteps, double delta_x, doub
       fast_special_thomas_algorithm(a, b, c, y, u, n+1);
 
       // Take heat production into account at.
-      for (int i = 1; i < n; i++) {
-        scale_x = (double)i/ (double)n;
+      for (int i = 2; i < n; i++) {
+        scale_x = (double)(i-1)/ (double)n;
         y(i) = y(i)+(Q(scale_x,rho,cp, delta_t));
       }
 
       //Check up upon that the boundary conditions is set corrected.
-      u(0)=y(0) = temp_crust;
+      u(1)=y(1) = temp_crust;
+
       u(n)=y(n) = temp_mantle;
 
       // Setup new time step, also calculating the difference between the seperath steps.
       sum = 0.0;
-      for (int i = 0; i <= n; i++) {
+      for (int i = 1; i <= n; i++) {
         sum += (u(i)-y(i)) * ( y(i)- u(i) );
         u(i) = y(i); // Replace previous time solution with new.
       }
@@ -298,7 +300,11 @@ vec simulation_no_radioactive_enrichment(int n, int tsteps, double delta_x, doub
         finish = clock(); // Gives the time at which the simulation has found equilibrium state.
         cout<<"Simulation in one dimention:\nEquilibrium reached at "<<t*delta_t/60/60/24/365/pow(10,9)<<
         " Giga years. (Simulation time ; "<< ( ( (double)finish - (double)start ) /CLOCKS_PER_SEC)/60<<" minutes)\n" <<endl;
-        return y; // Returns the eqilibrium state of the system. for further use.
+        vec ans(n);
+        for (int i = 1; i <= n; i++){
+            ans(i-1) = y(i);
+        }
+        return ans; // Returns the eqilibrium state of the system. for further use.
       }
 
     }// The end of time iteration.

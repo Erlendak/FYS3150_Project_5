@@ -25,12 +25,12 @@ int JacobiSolver(int nx, int ny, double dt, double dx,mat &A, double abstol){
     // Algorithms operators.
     int MaxIterations = 500000; // Set a maximum of iterations.
     mat B = A;
-    double D = dt/(dx*dx);
+    double D = dt/(dx*dx); // Alpha.
 
     // Iterativ solver.
     for(int k=0; k<MaxIterations; k++){
 
-        // Backwards Euler.
+        // Implicit Scheme.
         for(int i = 1; i<nx-1; i++){
             for(int j=1; j<ny-1; j++){
                 A(i,j) = B(i,j) + D*(B(i+1,j) + B(i,j+1) -4*B(i,j) + B(i-1,j) + B(i,j-1));
@@ -73,8 +73,8 @@ void diffusjon_example_2dim(int n){
     double tol = 10e-8;      // Setup tolleranse for reaching equilibrium.
     double dx = 1.0/(n-1);   // Set delta x for the simulation.
     double dt = 0.01*dx*dx;  // set appropriate amount of time step.
-    cout << dx << endl;
-    cout << dt << endl;
+    //cout << dx << endl;
+    //cout << dt << endl;
 
     mat A =zeros<mat>(n,n); // Initialize matrix for simulation.
 
@@ -183,7 +183,7 @@ void simulation_with_enrichment(int nx,int ny, double dt, double dxy, mat &A, in
     }
     gfile<<endl;
 
-    //Backward Euler ;
+    // Implicit Scheme ;
     mat B = A; //Gammel A
     double D = dt/(dxy*dxy)*k/(rho*cp);
 
@@ -284,7 +284,7 @@ void simulation_implemented_enrichment_decay(int nx,int ny, double dt, double dx
     double Q;         // The specific heat production at a given depth, time and time step.
 
 
-    //Backward Euler ;
+    // Implicit Scheme ;
     mat B = A; //Gammel A
     double D = dt/(dxy*dxy)*k/(rho*cp);
 
