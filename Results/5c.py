@@ -3,8 +3,10 @@ from scipy.ndimage import rotate
 import numpy as np
 import sys
 
+
 dt = 0.00005
 t1 =int( 0.1/dt)
+
 
 forward_euler_dt01 = np.loadtxt("forward_euler_dt01.dat")
 print("Reading forward_euler_dt01.dat")
@@ -19,10 +21,12 @@ print("Reading crank_nicolson_dt01.dat")
 crank_nicolson_dt001 = np.loadtxt("crank_nicolson_dt001.dat")
 print("Reading crank_nicolson_dt001.dat")
 
+
 """
 Analytical solution
 
 """
+
 for nx in [11,101]:
     x = np.linspace(0,1,nx)
 
@@ -40,7 +44,6 @@ for nx2 in [11,101]:
     for k in range(1,nx2):
         res2 += 2*(-1)**k/(k*np.pi)*np.exp(-(k*np.pi)**2*t2)*np.sin(np.pi*k*x2)
     res2 += x2
-
 
 plt.subplot(2,2,1)
 plt.plot(x,res,label= r'$t_1$'+" = 0.1 s,  Før likevekt.")
@@ -89,6 +92,7 @@ Crank Nicolson.
 Delta x ;  0.1
 
 """
+
 plt.subplot(2,2,4)
 plt.plot(crank_nicolson_dt01[t1], label = r'$t_1$'+" = 0.1 s,  Før likevekt.")
 plt.plot(crank_nicolson_dt01[-1], label = r'$t_2$'+" = 1.0 s,  Ved likevekt." )
@@ -100,8 +104,12 @@ plt.grid()
 plt.subplots_adjust(hspace=0.3)
 plt.show()
 
+
+
+
 """
-Delta x ; 0.01
+Analytical solution.
+
 """
 
 plt.subplot(2,2,1)
@@ -112,9 +120,6 @@ plt.ylabel("u ( x, t ) ;",size=15)
 plt.xlabel("x ; ",size=15)
 plt.legend()
 plt.grid()
-
-
-
 
 
 """
@@ -131,7 +136,6 @@ plt.title("Forward Euler "+r'$\Delta X$'+" = 0.01",size=17)
 plt.ylabel("u ( x, t ) ; ",size=15)
 plt.xlabel("x ; ",size=15)
 plt.grid()
-
 
 
 """
@@ -167,6 +171,9 @@ plt.grid()
 plt.subplots_adjust(hspace=0.3)
 plt.show()
 
+
+
+
 """
 Imshow
 
@@ -188,12 +195,12 @@ plt.xlabel(" x ; ",size=15)
 plt.grid()
 
 
-
 """
 Forward Euler.
 Delta x ;  0.01
 
 """
+
 plt.subplot(3,2,2)
 plt.imshow(forward_euler_dt001,aspect='auto',cmap='hot_r',extent=[0,10,1,0])
 plt.colorbar(label=" u ( x , t ) ;")
@@ -202,11 +209,13 @@ plt.ylabel(" t ; ",size=15)
 plt.xlabel(" x ; ",size=15)
 plt.grid()
 
+
 """
 Backward Euler.
 Delta x ;  0.1
 
 """
+
 plt.subplot(3,2,3)
 plt.imshow(backward_euler_dt01,aspect='auto',cmap='hot_r',extent=[0,10,1,0])
 plt.colorbar(label=" u ( x , t ) ;")
@@ -216,12 +225,12 @@ plt.xlabel(" x ; ",size=15)
 plt.grid()
 
 
-
 """
 Backward Euler.
 Delta x ;  0.01
 
 """
+
 plt.subplot(3,2,4)
 plt.imshow(backward_euler_dt001,aspect='auto',cmap='hot_r',extent=[0,10,1,0])
 plt.colorbar(label=" u ( x , t ) ;")
@@ -229,7 +238,6 @@ plt.title("u ( x , t ) \nBackwards Euler "+r'$\Delta X$'+" = 0.01",size=17)
 plt.ylabel(" t ; ",size=15)
 plt.xlabel(" x ; ",size=15)
 plt.grid()
-
 
 
 """
@@ -265,20 +273,16 @@ plt.show()
 
 
 
+"""
+2. Dimentional example.
+
+"""
 
 two_dimension_evolution_of_time = np.loadtxt("two_dimension_evolution_of_time.dat")
 print("Reading two_dimension_evolution_of_time.dat")
 
 two_dimension_evolution_of_time = two_dimension_evolution_of_time.reshape(4421, 10, 10)
-"""print(two_dimension_evolution_of_time[0])
-print("\n")
-print(two_dimension_evolution_of_time[1])
-""""""
-print(two_dimension_evolution_of_time[2])
-print(two_dimension_evolution_of_time[3])
-print(two_dimension_evolution_of_time[-1])
-print(two_dimension_evolution_of_time[-2])
-"""
+
 n = 10
 dx = 1.0/(n-1)   #// Set delta x for the simulation.
 dt = 0.01*dx*dx  #// set appropriate amount of time step.
@@ -289,8 +293,6 @@ def show_temperature_at(_t):
     plt.title("U ( X, Y, t )\nVed tiden t = {0:.2f} s.\n".format(_t*dt),size=17)
     plt.ylabel("Posisjon Y-akse ; Y ",size=15)
     plt.xlabel("Posisjon X-akse ; X ",size=15)
-    #plt.xlim([0,9])
-    #plt.ylim([0,9])
     plt.yticks(np.arange(0, 10, 1))
     plt.xticks(np.arange(0, 10, 1))
     plt.grid()#which = 'minor',linewidth=1)
@@ -298,31 +300,34 @@ def show_temperature_at(_t):
 
 plt.subplot(2,2,1)
 show_temperature_at(0)
-#show_temperature_at(1)
-#show_temperature_at(2)
-#show_temperature_at(3)
+
 plt.subplot(2,2,2)
 show_temperature_at(49)
+
 plt.subplot(2,2,3)
 show_temperature_at(499)
+
 plt.subplot(2,2,4)
-#show_temperature_at(4419)
 show_temperature_at(4420)
+
 plt.show()
+
+
 """
+Check equilibrium state should be same as last step in evolution of time
+""" """
+
 two_dimension = np.loadtxt("two_dimension.dat")
 print("Reading two_dimension.dat")
 two_dimension = two_dimension.reshape(2, 10, 10)
 
 plt.imshow(two_dimension[1],aspect='auto',cmap='hot_r',extent=[0,10,0,10])
-plt.colorbar(label="Temperatur")
-plt.title("Temperatur i et kvadrat, ved tiden t = {}.\n".format("eqvilibrium")+r'$\Delta X, \Delta Y$'+" = 0.1111...    "+r'$\Delta t$'+" = 0.000123457...",size=17)
-plt.ylabel("Posisjon Y-akse ; ",size=15)
-plt.xlabel("Posisjon X-akse ; ",size=15)
-#plt.xlim([0,9])
-#plt.ylim([0,9])
+plt.colorbar(label="U ( X, Y )")
+plt.title("U ( X, Y, t )\nVed equilibrium.\n",size=17)
+plt.ylabel("Posisjon Y-akse ; Y ",size=15)
+plt.xlabel("Posisjon X-akse ; X ",size=15)
 plt.yticks(np.arange(0, 10, 1))
 plt.xticks(np.arange(0, 10, 1))
-plt.grid()#which = 'minor',linewidth=1)
+plt.grid()
 plt.show()
 """
